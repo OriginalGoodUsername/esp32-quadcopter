@@ -1,11 +1,9 @@
-// ============================================================================
+
 // fc_esc_calibrate.ino  --  one-shot ESC throttle-range calibration (all 4)
-// ----------------------------------------------------------------------------
-// Restores the ESC-sync step from the original repo's build order (we deleted
-// its motor_calibration sketch). Mismatched ESC calibration = unequal thrust
-// at the same throttle = tips over / rams on takeoff.
+
+// Calibrates the throttle endpoints of the four ESCs used in this build.
 //
-//   >>>>>  PROPS OFF. ABSOLUTELY NO PROPS FOR THIS ONE.  <<<<<
+// Remove all propellers before running this sketch.
 //
 // PROCEDURE (no S3 needed -- uses the FC's BOOT button):
 //   1. Flash this sketch over USB. Unplug USB.
@@ -15,16 +13,15 @@
 //      -> LED blinks FAST while at MAX.
 //   3. After the beeps (~2 s), press the FC's **BOOT** button once.
 //      -> all 4 signals drop to 1000 (MIN). ESCs beep confirmation. LED solid.
-//   4. Done -- all 4 ESCs now share the exact same 1000..2000 range.
-//      Unplug battery, reflash fc_flight.
+//   4. Confirm each ESC's calibration tones. Unplug the battery and restore
+//      the flight firmware. The flown configuration uses esp-fc.
 //
 // Board: "ESP32 Dev Module"
-// ============================================================================
 
 #include <ESP32Servo.h>
 
 const int motPins[4] = {13, 25, 14, 27};   // M1 FR, M2 RR, M3 RL, M4 FL
-const int ESC_FREQ = 500;                  // same frequency the flight code uses
+const int ESC_FREQ = 500;                  // calibration signal frequency, Hz
 const int LED_PIN  = 2;
 const int BOOT_BTN = 0;                    // BOOT button on the DevKit = GPIO0
 

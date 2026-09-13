@@ -20,6 +20,6 @@ The source sets a nominal 20 ms transmitter scheduling interval. That is a code 
 
 The calibration utility immediately commands maximum throttle signals on the four configured pins, then switches to minimum when the board's BOOT button is pressed. **Remove all propellers before using this utility.** Its pin mapping and signal configuration belong to the original hardware; review them before adapting it.
 
-The utility's original comments refer to reflashing `fc_flight`, an earlier development sketch. The confirmed flying configuration used **esp-fc**. Those comments are retained with the source for provenance and must not be interpreted as evidence that the older flight sketch produced the reported outdoor flight.
+The confirmed flying configuration used **esp-fc**. An older `fc_flight` sketch remains outside this release; it is not the source of the reported outdoor flight.
 
-The source files are preserved rather than rewritten during repository preparation. No firmware was flashed and no connected hardware was operated.
+Source comments were shortened and corrected during publication; executable C++ tokens were checked against the original files and remain unchanged. No firmware was flashed and no connected hardware was operated.

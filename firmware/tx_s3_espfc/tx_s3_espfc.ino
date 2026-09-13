@@ -1,7 +1,7 @@
-// ============================================================================
+
 // tx_s3_espfc.ino  --  Logitech F310 (USB host) -> EspNowRcLink -> esp-fc
-// ----------------------------------------------------------------------------
-// Sends the F310 sticks as an 8-channel RC link that esp-fc's BUILT-IN ESP-NOW
+
+// Sends the F310 sticks as an 8-channel RC link that esp-fc's built-in ESP-NOW
 // receiver understands (same EspNowRcLink library it uses). Auto-binds.
 //   >>> PROPS OFF for bench testing. <<<
 //
@@ -16,7 +16,6 @@
 //   ch0 = roll  ch1 = pitch  ch2 = throttle  ch3 = yaw  ch4 = ARM(AUX1)  ch6 = ALTHOLD(AUX3)
 //
 // BINDING: power THIS transmitter first, then power the FC -- it auto-binds.
-// ============================================================================
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -24,7 +23,7 @@
 #include "EspUsbHost.h"
 #include "Transmitter.h"   // EspNowRcLink (flattened lib); namespace still EspNowRcLink::
 
-// ---- F310 "Dual Action" raw report indices (discovered earlier) ----
+// F310 "Dual Action" raw report indices
 #define IDX_LX 0    // left  X -> yaw
 #define IDX_LY 1    // left  Y -> throttle
 #define IDX_RX 2    // right X -> roll
@@ -34,18 +33,18 @@
 #define BTN_STOP 0x01   // LB
 #define BTN_ALTHOLD 0x08 // RT -> toggles altitude hold (sent on AUX3/ch6)
 
-// ---- flip if a stick is backwards (check esp-fc Receiver tab) ----
-bool invRoll = false, invPitch = true, invYaw = false;   // pitch reversed per user
+// flip if a stick is backwards (check esp-fc Receiver tab)
+bool invRoll = false, invPitch = true, invYaw = false;   // reversed pitch axis
 bool thrUpIsLow = true;              // F310: pushing the stick UP gives a LOW value
 
-// ---- stick feel (lower rate = LESS sensitive) ----
-float RC_RATE_RP  = 0.6f;            // ROLL/PITCH authority (was 0.8) -> less sensitive. Lower = calmer.
+// stick feel (lower rate = LESS sensitive)
+float RC_RATE_RP  = 0.6f;            // roll/pitch output scale
 float RC_EXPO_RP  = 0.55f;           // ROLL/PITCH center softening (higher = gentler around center)
-float RC_RATE_YAW = 0.8f;            // yaw authority (left as-is)
+float RC_RATE_YAW = 0.8f;            // yaw output scale
 float RC_EXPO_YAW = 0.45f;           // yaw center softening
-float applyExpo(float x, float e);   // defined below (soft curve, keeps the endpoints)
+float applyExpo(float x, float e);   // cubic blend preserving endpoints
 
-// ---- throttle feel: CENTERED climb/descend stick for esp-fc ALTHOLD (baro altitude hold) ----
+// throttle feel: CENTERED climb/descend stick for esp-fc ALTHOLD (baro altitude hold)
 //   push UP = climb    release (stick centers) = HOLD height    push DOWN = descend
 // esp-fc reads throttle center (1500) as "hold". The F310 throttle springs to center, so
 // letting go = hold. Toggle ALTHOLD with RT (sent on AUX3). With ALTHOLD off the same stick
@@ -102,20 +101,20 @@ void setup() {
 
   WiFi.mode(WIFI_STA);               // STA mode (no softAP) -> exact channel control for discovery
   WiFi.disconnect();                 // not joining any AP, so the channel is free to hop/lock
-  tx.begin(false);                   // we manage WiFi; NO hidden AP (fixes post-pair channel drift)
-  esp_wifi_set_ps(WIFI_PS_NONE);     // keep the radio awake so USB-host reports aren't starved
+  tx.begin(false);                   // transmitter code manages Wi-Fi initialization
+  esp_wifi_set_ps(WIFI_PS_NONE);     // disable Wi-Fi power saving
 
   Serial.println("[TX] esp-fc link ready. PROPS OFF. Hold thr DOWN + RB = arm; RT = ALT-HOLD toggle; LB = disarm.");
 }
 
 void loop() {
-  // ---- map the F310 ----
+  // map the F310
   uint16_t roll   = mapAxis(rep[IDX_RX], invRoll,  RC_RATE_RP,  RC_EXPO_RP);
   uint16_t pitch  = mapAxis(rep[IDX_RY], invPitch, RC_RATE_RP,  RC_EXPO_RP);
   uint16_t yaw    = mapAxis(rep[IDX_LX], invYaw,   RC_RATE_YAW, RC_EXPO_YAW);
   uint16_t thrRaw = mapThrottleCentered(rep[IDX_LY]);
 
-  // ---- arm: hold throttle DOWN + RB; LB disarms; RT toggles alt-hold ----
+  // arm: hold throttle DOWN + RB; LB disarms; RT toggles alt-hold
   uint8_t btn = rep[IDX_BTN];
   if ((btn & BTN_ARM) && !(lastBtn & BTN_ARM) && thrRaw < 1050) armed = true;
   if (btn & BTN_STOP) armed = false;
@@ -127,8 +126,8 @@ void loop() {
   uint32_t now = millis();
   if (now - lastSend >= 20) {         // 50 Hz
     lastSend = now;
-    // Safe alt-hold engage: after toggling ON, command HOLD (1500) and ignore the
-    // stick until it's re-centered -> engaging mid-climb can't run into the ceiling.
+    // On altitude-hold selection, send centre (1500) until the stick is centred.
+    // This command handoff does not guarantee altitude control or clearance.
     if (altRecenter && abs((int)thrRaw - 1500) < 40) altRecenter = false;
     // throttle: DISARMED -> idle 1000 (clears esp-fc THROTTLE arm-check).
     // ARMED: hold(1500) while re-centering, else the centered stick, slew-limited.
