@@ -1,5 +1,13 @@
-# Project media
+# Build photos
 
-No photos or flight recordings have been uploaded yet.
+![Assembled quadcopter on a table](assembled-quadcopter.jpg)
 
-Useful additions are a photo of the aircraft and transmitter, a short outdoor flight video, and receiver-monitor or propeller-off failsafe footage. Add actual media or hosted video links to the main README once available.
+Assembled F450 quadcopter with its central electronics and four ESCs.
+
+![Quadcopter beside a laptop showing Betaflight Configurator](quadcopter-configurator-setup.jpg)
+
+Quadcopter beside the configuration interface.
+
+![Betaflight Configurator Setup tab](betaflight-configurator.jpg)
+
+Setup tab with a tilted 3D quadcopter model and calibration controls. The aircraft runs esp-fc.

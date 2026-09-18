@@ -1,53 +1,23 @@
-# ESP32 Quadcopter with F310 / ESP-NOW Control
+# ESP32 quadcopter
 
-A custom ESP32 quadcopter flown outdoors using an F310 USB gamepad, an ESP32-S3 transmitter, and ESP-NOW. The aircraft runs **esp-fc flight firmware**; my integration connects the gamepad to its receiver and configures the aircraft for controlled flight.
+I assembled an F450 quadcopter with an ESP32 flight controller running [esp-fc](https://github.com/rtlopez/esp-fc). I wired an MPU-6500 IMU, BMP280 barometer and QMC5883L magnetometer over I2C, calibrated the four ESCs, and checked motor mapping and spin direction.
 
-**Project by Vraj Patel · July–August 2026**
+My controller uses a Logitech F310 USB gamepad connected to an ESP32-S3. I integrated its inputs with the esp-fc receiver over ESP-NOW, including stick mapping, deadzones, response shaping, throttle slew limiting and arming controls. Flight stabilization, sensor fusion, PID control and motor mixing come from esp-fc. I flew the quadcopter outdoors with manual gamepad control and self-level stabilization.
 
-## Demonstrated behaviour
+![Assembled F450 quadcopter](media/assembled-quadcopter.jpg)
 
-- Outdoor takeoff, hover, and manual flight with self-level stabilization.
-- Live receiver-monitor response for roll, pitch, throttle, yaw, and arm/disarm commands.
-- All four motors stopped within approximately 500 ms when the wireless control link was cut.
-- All four ESCs calibrated, with motor mapping and spin direction checked before flight.
+![Betaflight Configurator Setup tab with a tilted quadcopter model](media/betaflight-configurator.jpg)
 
-These are my observations from the completed build. Flight recordings and test logs are not uploaded yet; the approximate cutoff is an observed result, not a worst-case timing guarantee.
+Betaflight Configurator setup view; the aircraft uses esp-fc firmware. More [build photos](media/README.md).
 
-## Control path
+## Files and use
 
-```mermaid
-flowchart LR
-    G[Logitech F310 gamepad] -->|USB HID| T[ESP32-S3 transmitter]
-    T -->|EspNowRcLink / ESP-NOW| F[ESP32 running esp-fc]
-    F --> E[Four ESCs]
-    E --> M[Four motors]
-```
-
-## My contribution
-
-- Built and integrated the F310 transmitter interface with the esp-fc receiver.
-- Mapped raw gamepad reports to flight-control and auxiliary channels, including arm/disarm handling.
-- Configured stick direction, deadzone, response shaping, and throttle-command shaping in the transmitter sketch.
-- Calibrated the ESCs, checked motor mapping and direction, and validated receiver input, outdoor flight, and wireless link-loss behaviour.
-
-The transmitter uses the **EspUsbHost** and **EspNowRcLink** libraries. Flight stabilization and the receiver's flight-controller behaviour are provided by **esp-fc**. This repository does not claim that I wrote esp-fc's sensor fusion, PID controller, motor mixer, or ESP-NOW transport library.
-
-## Contents
-
-| Path | Contents |
+| Path | Purpose |
 |---|---|
-| `firmware/tx_s3_espfc/tx_s3_espfc.ino` | F310 transmitter sketch copied from the local project |
-| `tools/fc_esc_calibrate/fc_esc_calibrate.ino` | ESC calibration utility retained from development |
-| [docs/SETUP.md](docs/SETUP.md) | Local dependencies and reproduction status |
-| [docs/TESTING.md](docs/TESTING.md) | Confirmed test observations and limits |
-| [media/](media/README.md) | Location for actual build photos and demo links |
+| [firmware/tx_s3_espfc/](firmware/tx_s3_espfc/) | F310 transmitter for the esp-fc receiver |
+| [tools/fc_esc_calibrate/](tools/fc_esc_calibrate/) | Four-ESC throttle-range calibration |
+| [experiments/arduino-flight/](experiments/arduino-flight/) | Separate, untested Arduino flight controller and raw ESP-NOW transmitter |
+| [docs/SETUP.md](docs/SETUP.md) | Board settings, dependencies and controls |
+| [docs/TESTING.md](docs/TESTING.md) | Observations from the completed esp-fc build |
 
-The transmitter source also contains an altitude-hold auxiliary-channel toggle. Its presence in code does not establish a validated altitude-hold result; the confirmed flight claim is stabilized manual flight.
-
-## Upstream projects
-
-- [esp-fc](https://github.com/rtlopez/esp-fc): aircraft flight firmware.
-- [EspNowRcLink](https://github.com/rtlopez/espnow-rclink): ESP-NOW RC transport.
-- [EspUsbHost](https://github.com/tanakamasayuki/EspUsbHost): USB host support.
-
-Upstream firmware and libraries are not copied into this repository. This is an integration project with local source and documentation, not a packaged, independently reproduced flight-controller release.
+The transmitter uses [EspUsbHost](https://github.com/tanakamasayuki/EspUsbHost) for USB input and [EspNowRcLink](https://github.com/rtlopez/espnow-rclink) for the RC link. The calibration utility uses ESP32Servo. Remove all propellers for bench checks and ESC calibration; follow the pin mapping and power sequence in the sketch.

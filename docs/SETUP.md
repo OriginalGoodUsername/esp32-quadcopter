@@ -1,25 +1,24 @@
-# Source and reproduction notes
+# Setup
 
-## Transmitter
+Open each `.ino` in its matching sketch folder in the Arduino IDE.
 
-The supplied `tx_s3_espfc.ino` sketch targets an ESP32-S3 and reads an F310 in its D-switch mode through USB host support. The local source specifies the ESP32S3 Dev Module board and USB CDC On Boot disabled. Consult the source comments for the particular board's USB connection assumptions.
+## F310 transmitter
 
-The local development libraries identify themselves as:
+- Board: ESP32S3 Dev Module, USB CDC On Boot disabled.
+- F310: D-switch mode, connected to the native USB host port. The source assumes VBUS through the board's OTG solder bridge; use the UART port for power and serial. With this wiring, do not connect the native port to a PC.
+- Libraries: EspUsbHost and rtlopez's EspNowRcLink. The sketch expects the flattened `Transmitter.h` include layout.
+- Power the transmitter before the esp-fc flight controller for automatic binding.
 
-| Dependency | Locally reported version | Note |
-|---|---|---|
-| EspNowRcLink | 0.1.1 | Local library metadata describes flattened includes for Arduino IDE; the sketch includes `Transmitter.h` |
-| EspUsbHost | 2.1.0 | The sketch uses USB HID input and device connection callbacks |
-| Arduino ESP32 core | Not recorded in this repository | Exact working version still needs to be captured |
+Channels are AETR: 0 roll, 1 pitch, 2 throttle, 3 yaw, 4 arm (AUX1), and 6 altitude-hold request (AUX3). The send interval is 20 ms.
 
-These metadata values do not prove that a fresh upstream download matches the locally installed library source. A clean dependency install and compile have not been performed for this repository. Exact dependency revisions and the working aircraft configuration remain to be added before claiming reproducible builds.
+Hold throttle down and press RB to arm; LB disarms. RT toggles the altitude-hold request. The spring-centered throttle gives roughly half throttle in manual mode. On altitude-hold selection, the transmitter sends center until the stick is re-centered. Check channel direction and receiver mode assignments with propellers removed.
 
-The source sets a nominal 20 ms transmitter scheduling interval. That is a code setting, not a measured end-to-end control latency.
+## ESC calibration
 
-## ESC calibration utility
+Use ESP32 Dev Module and ESP32Servo. **Remove all propellers.** The utility immediately sends 2000 microseconds on GPIO 13, 25, 14 and 27 at 500 Hz. GPIO 0 (BOOT) switches all four outputs to 1000 microseconds. Follow the full battery/USB sequence and calibration-tone guidance in the source, then disconnect power and restore the flight firmware.
 
-The calibration utility immediately commands maximum throttle signals on the four configured pins, then switches to minimum when the board's BOOT button is pressed. **Remove all propellers before using this utility.** Its pin mapping and signal configuration belong to the original hardware; review them before adapting it.
+## Arduino flight experiment
 
-The confirmed flying configuration used **esp-fc**. An older `fc_flight` sketch remains outside this release; it is not the source of the reported outdoor flight.
+`experiments/arduino-flight/` contains `fc_flight` and `tx_s3_arduino`. The FC implements MPU6500 complementary angle fusion, cascaded PID, a QUADX mixer and BMP280 altitude hold. The transmitter sends a raw `ControlPacket` with four `uint16_t` channel values and two `uint8_t` flags (`arm`, `altHold`) on Wi-Fi channel 1. This differs from the primary transmitter's EspNowRcLink protocol.
 
-Source comments were shortened and corrected during publication; executable C++ tokens were checked against the original files and remain unchanged. No firmware was flashed and no connected hardware was operated.
+The FC uses ESP32Servo and the Arduino ESP32 core; its transmitter also needs EspUsbHost. Keep both packet definitions and channel settings aligned. The experiment is marked **UNTESTED**. Preserve the propellers-off checks, sensor calibration values and motor-direction checks in its source. The calibration utility and experimental FC label the first two motor positions differently; confirm physical motor mapping before use.

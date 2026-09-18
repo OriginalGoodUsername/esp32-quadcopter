@@ -1,13 +1,12 @@
-
 // tx_s3_espfc.ino  --  Logitech F310 (USB host) -> EspNowRcLink -> esp-fc
 
 // Sends the F310 sticks as an 8-channel RC link that esp-fc's built-in ESP-NOW
 // receiver understands (same EspNowRcLink library it uses). Auto-binds.
-//   >>> PROPS OFF for bench testing. <<<
+// Remove all propellers for bench testing.
 //
 // BOARD: "ESP32S3 Dev Module", USB CDC On Boot = DISABLED.
 //   F310 (switch D) -> native "USB" port (VBUS via the OTG solder-bridge).
-//   Power + Serial via the UART port.  *** Never plug the native port into a PC.
+//   Power + Serial via the UART port. Never plug the native port into a PC.
 //
 // LIBRARY: install "espnow-rclink" (rtlopez) -- download the repo ZIP and
 //   Arduino IDE > Sketch > Include Library > Add .ZIP Library.
@@ -127,7 +126,6 @@ void loop() {
   if (now - lastSend >= 20) {         // 50 Hz
     lastSend = now;
     // On altitude-hold selection, send centre (1500) until the stick is centred.
-    // This command handoff does not guarantee altitude control or clearance.
     if (altRecenter && abs((int)thrRaw - 1500) < 40) altRecenter = false;
     // throttle: DISARMED -> idle 1000 (clears esp-fc THROTTLE arm-check).
     // ARMED: hold(1500) while re-centering, else the centered stick, slew-limited.

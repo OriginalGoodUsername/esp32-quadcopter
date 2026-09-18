@@ -1,7 +1,7 @@
-
 // fc_esc_calibrate.ino  --  one-shot ESC throttle-range calibration (all 4)
 
 // Calibrates the throttle endpoints of the four ESCs used in this build.
+// Mismatched calibration can produce unequal thrust at the same command.
 //
 // Remove all propellers before running this sketch.
 //
